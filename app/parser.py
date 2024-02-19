@@ -53,10 +53,7 @@ class NewsPageParser(ParsePage):
         return {
             "title": data["title"].text,
             "image": f'{settings.app.START_URL}{data["image"].attrs["src"]}',
-            "content": "".join([ item.text for item in data["content"].select("p") if item.text ])
+            "original_content": "".join([ item.text for item in data["content"].select("p") if item.text ]),
+            "link": self.parse_req.url
         }
 
-def test_req():
-    parse_page = MainPageParser()
-    news = [ NewsPageParser(item) for item in parse_page() ]
-    return [ parse() for parse in news ]
