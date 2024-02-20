@@ -21,7 +21,8 @@ class ChatGPT:
                 ]
             )
             return response.choices[0].message.content
-        except RateLimitError:
+        except RateLimitError as e:
+            print(e)
             return text
 
 chat = ChatGPT(client=OpenAI(api_key=settings.openAi.TOKEN))

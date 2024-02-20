@@ -44,6 +44,7 @@ class MainPageParser(ParsePage):
     
 class NewsPageParser(ParsePage):
     def __init__(self, news_id: str | int):
+        self.id = news_id
         super().__init__(
             parse_req=ParseRequest(f"{settings.app.START_URL}{settings.app.NEWS_URL_PART}{news_id}"),
             selector=settings.app.NEWS_SELECTORS
@@ -51,9 +52,12 @@ class NewsPageParser(ParsePage):
         
     def post_handler(self, data: Dict[str, Tag]) -> Dict[str, str]:
         return {
-            "title": data["title"].text,
-            "image": f'{settings.app.START_URL}{data["image"].attrs["src"]}',
-            "original_content": "".join([ item.text for item in data["content"].select("p") if item.text ]),
-            "link": self.parse_req.url
+            "data": {
+                "news_id": int(self.id),
+                "url": self.parse_req.url,
+                "title": data["title"].text,
+                "original_content": "".join([ item.text for item in data["content"].select("p") if item.text ]),
+            },
+            "image": f'{settings.app.START_URL}{data["image"].attrs["src"]}'
         }
 

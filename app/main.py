@@ -1,19 +1,17 @@
 from app.parser import NewsPageParser, MainPageParser
-from app.chat_openai import chat, ChatGPT
+from app.handlers.news import create_news_handler
 from typing import List
 
 class App:
     NewsPageParserFactory: NewsPageParser = NewsPageParser
     main_page_parser: MainPageParser = MainPageParser()
-    chat: ChatGPT = chat
 
     def __call__(self) -> None:
         last_news = self.load_last_news()
-        print(self.handle_news(last_news[1:2]))
+        print(self.handle_news(last_news))
 
     def handle_news(self, news: List[dict]) -> List[dict]:
-        return [ { "org_cont": item["original_content"], "content": self.chat.create_content(item["title"], item["original_content"]) } for item in news ]
-
+        return create_news_handler.create(news)
 
     def load_last_news(self):
         ids = self.main_page_parser()
