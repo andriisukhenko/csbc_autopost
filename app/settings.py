@@ -10,7 +10,7 @@ load_dotenv(override=True)
 class App:
     ROOT_DIR: Path = Path(__file__).parent.parent
     DB_NAME: str = os.getenv("DB_NAME")
-    DB_CONNECTION_STR: str = f"sqlite:///{ROOT_DIR}/{DB_NAME}.db"
+    DB_CONNECTION_STR: str = f"sqlite:///{ROOT_DIR}/{DB_NAME}.sqlite3"
     IMAGES_PATH: str = f"{ROOT_DIR}/storage/images"
     START_URL: str = 'http://csbc.edu.ua/'
     NEWS_URL_PART: str = 'fullnews.php?news='
