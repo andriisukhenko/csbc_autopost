@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from dataclasses import dataclass, field
 from collections import defaultdict
 from pathlib import Path
+from types import List
 import os
 
 load_dotenv(override=True)
@@ -40,9 +41,15 @@ class OpenAI:
         """
 
 @dataclass(frozen=True)
+class TgBot:
+    TOKEN: str = os.getenv("TG_BOT_TOKEN")
+    MODERATORS: List[str] = os.getenv("TG_MODERATORS").split(",")
+    CHANNELS: List[str] = os.getenv("TG_CHANNELS").split(",")
+
+@dataclass(frozen=True)
 class Settings:
     app: App = App()
     openAi: OpenAI = OpenAI()
-    model: str = "gpt-3.5-turbo"
+    tgBot: TgBot = TgBot()
 
 settings = Settings()
