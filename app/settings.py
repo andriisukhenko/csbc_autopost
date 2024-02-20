@@ -1,12 +1,16 @@
 from dotenv import load_dotenv
 from dataclasses import dataclass, field
 from collections import defaultdict
+from pathlib import Path
 import os
 
 load_dotenv()
 
 @dataclass(frozen=True)
 class App:
+    ROOT_DIR: Path = Path(__file__).parent.parent
+    DB_NAME: str = os.getenv("DB_NAME")
+    DB_CONNECTION_STR: str = f"sqlite:///{ROOT_DIR}.db"
     START_URL: str = 'http://csbc.edu.ua/'
     NEWS_URL_PART: str = 'fullnews.php?news='
     LINK_SELECTOR: str = f'a[href^="{NEWS_URL_PART}"]'

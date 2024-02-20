@@ -1,4 +1,4 @@
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 from app.settings import settings
 
 class ChatGPT:
@@ -12,13 +12,16 @@ class ChatGPT:
         self.user_message = user_message
 
     def create_content(self, title, text):
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                { "role": "system", "content": self.system_message },
-                { "role": "user" , "content": self.user_message(title, text)}
-            ]
-        )
-        return response.choices[0].message.content
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    { "role": "system", "content": self.system_message },
+                    { "role": "user" , "content": self.user_message(title, text)}
+                ]
+            )
+            return response.choices[0].message.content
+        except RateLimitError:
+            return text
 
 chat = ChatGPT(client=OpenAI(api_key=settings.openAi.TOKEN))

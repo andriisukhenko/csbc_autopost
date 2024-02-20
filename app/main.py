@@ -12,7 +12,6 @@ class App:
         print(self.handle_news(last_news[1:2]))
 
     def handle_news(self, news: List[dict]) -> List[dict]:
-        print(news)
         return [ { "org_cont": item["original_content"], "content": self.chat.create_content(item["title"], item["original_content"]) } for item in news ]
 
 
