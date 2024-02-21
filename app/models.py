@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Integer, String, ForeignKey, Text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Mapped, mapped_column, relationship
 from app.settings import settings
+from typing import List
 
 engine = create_engine(settings.app.DB_CONNECTION_STR)
 DBSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -17,7 +18,7 @@ class News(Base):
     original_content: Mapped[str] = mapped_column(Text, nullable=False)
     modified_content: Mapped[str] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default="new")
-    images: Mapped["Image"] = relationship(back_populates="news")
+    images: Mapped[List["Image"]] = relationship(back_populates="news")
 
 class Image(Base):
     __tablename__ = "images"

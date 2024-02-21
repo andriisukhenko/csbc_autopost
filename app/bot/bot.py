@@ -3,9 +3,10 @@ from aiogram.filters.command import Command
 from app.settings import settings
 import asyncio
 
+bot = Bot(token=settings.tgBot.TOKEN)
+dp = Dispatcher()
+
 async def main():
-    bot = Bot(token=settings.tgBot.TOKEN)
-    dp = Dispatcher()
     print("bot start")
 
     @dp.message(Command("start"))

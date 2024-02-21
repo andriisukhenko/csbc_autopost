@@ -1,10 +1,11 @@
-from typing import Any, List
+from typing import List
 from aiogram import Bot
 from app.models import get_db, News, Image
 from sqlalchemy.orm import Session
 from app.chat_openai import chat, ChatGPT
-from app.models import News
+from app.models import News, Image
 from app.settings import settings
+import asyncio
 
 class CreateNews:
     def __init__(self, chat: ChatGPT) -> None:
@@ -31,13 +32,26 @@ class CreateNews:
         [ db.refresh(news) for news in obj_news ]
         return obj_news
     
-class SendToModerators:
+class SendToModeratorsHandler:
     def __init__(self, news: List[News], bot: Bot) -> None:
         self.news = news
         self.bot = bot
         self.moderators = settings.tgBot.MODERATORS
 
-    def __call__(self):
-        return self.moderators
+    async def __call__(self):
+        senders = [ self.send_news(news) for news in self.news ]
+        return await asyncio.gather(*senders)
+    
+    async def send_news(self, news: News):
+        for moderator_id in self.moderators:
+            print("message for:", moderator_id)
+            print("message id:", news.news_id)
+            if len(news.images) > 0:
+                print("has image:", news.images[0].path)
+                image: Image = news.images[0]
+                await self.bot.send_photo(moderator_id, image.path, caption=news.modified_content)
+            else:
+                print("with out images")
+                await self.bot.send_message(moderator_id, news.modified_content)
 
 create_news_handler = CreateNews(chat=chat)
