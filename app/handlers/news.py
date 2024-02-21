@@ -1,7 +1,10 @@
-from typing import List
+from typing import Any, List
+from aiogram import Bot
 from app.models import get_db, News, Image
 from sqlalchemy.orm import Session
 from app.chat_openai import chat, ChatGPT
+from app.models import News
+from app.settings import settings
 
 class CreateNews:
     def __init__(self, chat: ChatGPT) -> None:
@@ -27,7 +30,14 @@ class CreateNews:
         db.commit()
         [ db.refresh(news) for news in obj_news ]
         return obj_news
-        
+    
+class SendToModerators:
+    def __init__(self, news: List[News], bot: Bot) -> None:
+        self.news = news
+        self.bot = bot
+        self.moderators = settings.tgBot.MODERATORS
 
+    def __call__(self):
+        return self.moderators
 
 create_news_handler = CreateNews(chat=chat)

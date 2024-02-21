@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from dataclasses import dataclass, field
 from collections import defaultdict
 from pathlib import Path
-from types import List
+from typing import List
 import os
 
 load_dotenv(override=True)
@@ -21,6 +21,7 @@ class App:
         "image": '.content .preview img',
         "content": '.content .one_half:not(.first)'
     })
+    PARSE_INTERVAL: int = int(os.getenv("PARSE_INTERVAL"))
 
 @dataclass(frozen=True)
 class OpenAI:
@@ -43,8 +44,8 @@ class OpenAI:
 @dataclass(frozen=True)
 class TgBot:
     TOKEN: str = os.getenv("TG_BOT_TOKEN")
-    MODERATORS: List[str] = os.getenv("TG_MODERATORS").split(",")
-    CHANNELS: List[str] = os.getenv("TG_CHANNELS").split(",")
+    MODERATORS: List[str] = field(default_factory=lambda: os.getenv("TG_MODERATORS").split(","))
+    CHANNELS: List[str] = field(default_factory=lambda: os.getenv("TG_CHANNELS").split(","))
 
 @dataclass(frozen=True)
 class Settings:
