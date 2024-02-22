@@ -1,21 +1,21 @@
 from app.handlers.news import AcceptNewsHandler, DeclineNewsHandler, RegenerateNewsHandler
-from app.bot import bot
+from aiogram import types
 from app.models import get_db
 
 class NewsModerationController:
-    async def publish(self, message, news_id: int):
+    async def publish(self, callback: types.CallbackQuery, news_id: int):
         db = next(get_db())
         handler = AcceptNewsHandler(news_id, db)
-        handler(message=message, bot=bot)
+        await handler(callback=callback)
 
-    async def decline(self, message, news_id: int):
+    async def decline(self, callback: types.CallbackQuery, news_id: int):
         db = next(get_db())
         handler = DeclineNewsHandler(news_id, db)
-        handler(message=message)
+        await handler(callback=callback)
 
-    async def regenarate(self, message, news_id: int):
+    async def regenarate(self, callback: types.CallbackQuery, news_id: int):
         db = next(get_db())
         handler = RegenerateNewsHandler(news_id, db)
-        handler(message=message)
+        await handler(callback=callback)
 
 news_moderation_controller = NewsModerationController()

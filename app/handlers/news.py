@@ -7,6 +7,7 @@ from app.chat_openai import chat, ChatGPT
 from app.models import News, Image
 from app.settings import settings
 from app.bot.callbacks import NewsModerationCallback
+from app.bot.bot import bot
 from abc import ABCMeta, abstractclassmethod
 
 class NotFoundNewsExceiption(Exception):
@@ -20,6 +21,19 @@ class ParseMessageMixin:
 {news.modified_content}
 <i></i>
 <b><a href='{news.url}'>Новина на сайті</a></b>"""
+    
+    def create_keyboard(self, news: News) -> types.InlineKeyboardMarkup:
+        buttons = [
+            [
+                types.InlineKeyboardButton(text="Опублікувати", callback_data=NewsModerationCallback(action='accept', news_id=news.id).pack()),
+                types.InlineKeyboardButton(text="Відхилити", callback_data=NewsModerationCallback(action='decline', news_id=news.id).pack())
+            ],
+            [
+                types.InlineKeyboardButton(text="Перегенерувати", callback_data=NewsModerationCallback(action='regenerate', news_id=news.id).pack()),
+                types.InlineKeyboardButton(text="Переглянути на сайті", url=news.url)
+            ]
+        ]
+        return types.InlineKeyboardMarkup(inline_keyboard=buttons)
 
 class CreateNews:
     def __init__(self, chat: ChatGPT) -> None:
@@ -54,20 +68,7 @@ class SendToModeratorsHandler(ParseMessageMixin):
 
     async def __call__(self):
         return [ await self.send_news(news) for news in self.news ]
- 
-    def create_keyboard(self, news: News) -> types.InlineKeyboardMarkup:
-        buttons = [
-            [
-                types.InlineKeyboardButton(text="Опублікувати", callback_data=NewsModerationCallback(action='accept', news_id=news.id).pack()),
-                types.InlineKeyboardButton(text="Відхилити", callback_data=NewsModerationCallback(action='decline', news_id=news.id).pack())
-            ],
-            [
-                types.InlineKeyboardButton(text="Перегенерувати", callback_data=NewsModerationCallback(action='regenerate', news_id=news.id).pack()),
-                types.InlineKeyboardButton(text="Переглянути на сайті", url=news.url)
-            ]
-        ]
-        return types.InlineKeyboardMarkup(inline_keyboard=buttons)
-    
+     
     async def send_news(self, news: News):
         for moderator_id in self.moderators:
             print("message for:", moderator_id)
@@ -77,6 +78,7 @@ class SendToModeratorsHandler(ParseMessageMixin):
             return await self.bot.send_message(moderator_id, self.prepare_message(news), parse_mode=ParseMode.HTML, reply_markup=keybord)
 
 class NewsHandler(ParseMessageMixin, metaclass=ABCMeta):
+    bot: Bot = bot
     skiped_statuses = ['accepted', 'declined']
     success_answer = 'Дія успішна'
     failed_answer = 'Новину вже оброблено'
@@ -86,12 +88,13 @@ class NewsHandler(ParseMessageMixin, metaclass=ABCMeta):
         self.db = db
         self.channels_id = settings.tgBot.CHANNELS
 
-    async def __call__(self, *args, message: types.Message, **kwargs) -> News | None:
+    async def __call__(self, *args, callback: types.CallbackQuery, **kwargs) -> News | None:
         try:
-            await self.handler(*args, message, **kwargs)
-            message.answer(self.success_answer)
+            await self.handler(*args, callback, **kwargs)
+            await callback.answer(self.success_answer)
         except NotFoundNewsExceiption:
-            message.answer(self.failed_answer)
+            await callback.answer(self.failed_answer)
+            await callback.message.delete()
 
     @abstractclassmethod
     async def handler(self, *args, **kwargs):
@@ -113,31 +116,33 @@ class NewsHandler(ParseMessageMixin, metaclass=ABCMeta):
 
 class AcceptNewsHandler(NewsHandler):
     success_answer = "Новина відправлена на публікацію"
+    channels_ids = settings.tgBot.CHANNELS
 
-    async def handler(self, bot: Bot, message: types.Message) -> News:
-        news = self.get_news()
-        for channel_id in self.channel_id:
-            await bot.send_message(channel_id, self.prepare_message(news))
-        self.change_status(news, "accepted")
+    async def handler(self, callback: types.CallbackQuery) -> News:
+        news: News = await self.get_news()
+        for channel_id in self.channels_ids:
+            await bot.send_message(channel_id, self.prepare_message(news), parse_mode=ParseMode.HTML)
+        await self.change_status(news, "accepted")
+        await callback.message.delete()
         return news
     
 class DeclineNewsHandler(NewsHandler):
     success_answer = "Новину відхилено"
 
-    async def handler(self, message: types.Message) -> News | None:
-        news = await self.get_news()
-        self.change_status(news, "declined")
-        message.remove_unset()
+    async def handler(self, callback: types.CallbackQuery) -> News | None:
+        news: News = await self.get_news()
+        await self.change_status(news, "declined")
+        await callback.message.delete()
         return news
     
 class RegenerateNewsHandler(NewsHandler):
     success_answer = "Новину перегенеровано"
 
-    async def __call__(self, message: types.Message) -> News | None:
-        news: News = self.get_news()
+    async def handler(self, callback: types.CallbackQuery) -> News | None:
+        news: News = await self.get_news()
         news.modified_content = chat.create_content(news.title, news.original_content)
-        message.edit_text(text=self.prepare_message(news))
-        self.change_status(news, "regenerated")
+        await callback.message.edit_text(text=self.prepare_message(news), parse_mode=ParseMode.HTML, reply_markup=self.create_keyboard(news))
+        await self.change_status(news, "regenerated")
         return news
         
 

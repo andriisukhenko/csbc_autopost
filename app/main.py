@@ -1,7 +1,8 @@
 from app.parser import NewsPageParser, MainPageParser
 from app.handlers.news import create_news_handler, SendToModeratorsHandler
 from typing import List
-from app.bot import run_bot, bot
+from app.bot.bot import bot
+from app.bot.runner import run_bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
 
