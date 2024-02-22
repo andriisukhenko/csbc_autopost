@@ -18,7 +18,7 @@ class News(Base):
     original_content: Mapped[str] = mapped_column(Text, nullable=False)
     modified_content: Mapped[str] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String, nullable=False, default="new")
-    images: Mapped[List["Image"]] = relationship(back_populates="news")
+    images: Mapped[List["Image"]] = relationship(back_populates="news", lazy='joined')
 
 class Image(Base):
     __tablename__ = "images"

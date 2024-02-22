@@ -1,19 +1,20 @@
 from abc import ABCMeta
 from typing import List, Dict
-import requests
 from app.settings import settings
 from bs4 import BeautifulSoup, Tag
+import aiohttp
 
 class ParseRequest:
-    def __init__(self, url: str, format: str = 'lxml', req: requests = requests, soup: BeautifulSoup = BeautifulSoup) -> None:
+    def __init__(self, url: str, format: str = 'lxml', http: aiohttp = aiohttp, soup: BeautifulSoup = BeautifulSoup) -> None:
         self.url = url
         self.format = format
-        self.req = req
+        self.http = http
         self.soup = soup
 
-    def __call__(self) -> BeautifulSoup:
-        response = self.req.get(self.url)
-        return self.soup(response.text, self.format)
+    async def __call__(self) -> BeautifulSoup:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.url) as response:
+                return self.soup(await response.text(), self.format)
 
 class ParsePage(metaclass=ABCMeta):
     def __init__(self, parse_req: ParseRequest, selector: str | dict):
@@ -21,8 +22,8 @@ class ParsePage(metaclass=ABCMeta):
         self.selector = selector
         self.resp = None
 
-    def __call__(self):
-        resp = self.parse_req()
+    async def __call__(self):
+        resp = await self.parse_req()
         return self.post_handler(self.select(resp))
     
     def select(self, resp: BeautifulSoup) -> List[Tag] | Dict[str, Tag]:
