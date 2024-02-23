@@ -20,6 +20,8 @@ class ChatGPT:
                     { "role": "user" , "content": self.user_message(title, text)}
                 ]
             )
+            print(title, response.choices[0].message.content)
+            print("")
             return response.choices[0].message.content
         except RateLimitError as e:
             print(e)
