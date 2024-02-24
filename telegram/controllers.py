@@ -1,4 +1,4 @@
-from app.handlers.news import AcceptNewsHandler, DeclineNewsHandler, RegenerateNewsHandler
+from telegram.moderation_handlers import AcceptNewsHandler, DeclineNewsHandler, RegenerateNewsHandler
 from aiogram import types
 from app.models import get_db
 
