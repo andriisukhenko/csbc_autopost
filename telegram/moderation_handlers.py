@@ -58,7 +58,6 @@ class SendToModeratorsHandler:
         return [ await self.send_news(news) for news in self.news ]
      
     async def send_news(self, news: News):
-        print("moderators", self.moderators)
         for moderator_id in self.moderators:
             print("message for:", moderator_id)
             print("message id:", news.news_id)
