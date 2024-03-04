@@ -40,7 +40,6 @@ scheduler = AsyncIOScheduler()
 app = App(ParseNewsFactory=NewsPageParser, main_page_parser=MainPageParser(), store_news=StoreNews(chat=chat))
 
 async def main():
-    print(settings.tgBot.MODERATORS)
     scheduler.add_job(app.start, trigger='cron', minute=f'*/{settings.app.PARSE_INTERVAL}')
     scheduler.start()
     await run_bot()
