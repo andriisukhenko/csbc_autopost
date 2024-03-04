@@ -58,13 +58,14 @@ class SendToModeratorsHandler:
         return [ await self.send_news(news) for news in self.news ]
      
     async def send_news(self, news: News):
+        print("moderators", self.moderators)
         for moderator_id in self.moderators:
             print("message for:", moderator_id)
             print("message id:", news.news_id)
             print("message text:", len(news.modified_content))
             keybord = self.CreateKeyboard(news)
             message = self.PrepareMessage(news)
-            return await self.bot.send_message(moderator_id, message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keybord.news_moderation())
+            await self.bot.send_message(moderator_id, message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keybord.news_moderation())
 
 class NewsHandler(metaclass=ABCMeta):
     PrepareMessage = PrepareMessage
