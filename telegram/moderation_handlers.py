@@ -19,11 +19,8 @@ class PrepareMessage:
 
     def for_telegram(self):
         return f"""
-<b>{self.news.title}</b>
-{ f"<a href='{self.news.images[0].path}'>&#8205;</a>" if len(self.news.images) > 0 else "" }
 {self.news.modified_content}
-<i></i>
-<b><a href='{self.news.url}'>Новина на сайті</a></b>"""
+"""
 
 class CreateKeyBoard:
     def __init__(self, news: News) -> None:
@@ -59,12 +56,18 @@ class SendToModeratorsHandler:
      
     async def send_news(self, news: News):
         for moderator_id in self.moderators:
-            print("message for:", moderator_id)
-            print("message id:", news.news_id)
-            print("message text:", len(news.modified_content))
             keybord = self.CreateKeyboard(news)
             message = self.PrepareMessage(news)
-            await self.bot.send_message(moderator_id, message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keybord.news_moderation())
+            if(len(news.images) > 0):
+                await self.bot.send_photo(
+                    photo=news.images[0].path,
+                    chat_id=moderator_id,
+                    caption=message.for_telegram(),
+                    parse_mode=ParseMode.HTML, 
+                    reply_markup=keybord.news_moderation()
+                    )
+            else:
+                await self.bot.send_message(moderator_id, message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keybord.news_moderation())
 
 class NewsHandler(metaclass=ABCMeta):
     PrepareMessage = PrepareMessage
@@ -114,7 +117,15 @@ class AcceptNewsHandler(NewsHandler):
 
     async def handler(self, callback: types.CallbackQuery, news: News, keyboard: CreateKeyBoard, message: PrepareMessage) -> News:
         for channel_id in self.channels_ids:
-            await bot.send_message(channel_id, message.for_telegram(), parse_mode=ParseMode.HTML)
+            if(len(news.images) > 0):
+                await self.bot.send_photo(
+                    photo=news.images[0].path,
+                    chat_id=channel_id,
+                    caption=message.for_telegram(),
+                    parse_mode=ParseMode.HTML
+                    )
+            else:
+                await self.bot.send_message(channel_id, message.for_telegram(), parse_mode=ParseMode.HTML)
         await self.change_status(news, "accepted")
         await callback.message.delete()
         return news
@@ -132,6 +143,9 @@ class RegenerateNewsHandler(NewsHandler):
 
     async def handler(self, callback: types.CallbackQuery, news: News, keyboard: CreateKeyBoard, message: PrepareMessage) -> News | None:
         news.modified_content = chat.create_content(news.title, news.original_content)
-        await callback.message.edit_text(text=message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keyboard.news_moderation())
+        if (callback.message.photo):
+            await callback.message.edit_caption(caption=message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keyboard.news_moderation())
+        else:
+            await callback.message.edit_text(text=message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keyboard.news_moderation())
         await self.change_status(news, "regenerated")
         return news
