@@ -60,6 +60,7 @@ class SendToModeratorsHandler:
             message = self.PrepareMessage(news)
             if(len(news.images) > 0):
                 await self.bot.send_photo(
+                    photo=news.images[0].path,
                     chat_id=moderator_id,
                     caption=message.for_telegram(),
                     parse_mode=ParseMode.HTML, 
@@ -116,7 +117,15 @@ class AcceptNewsHandler(NewsHandler):
 
     async def handler(self, callback: types.CallbackQuery, news: News, keyboard: CreateKeyBoard, message: PrepareMessage) -> News:
         for channel_id in self.channels_ids:
-            await bot.send_message(channel_id, message.for_telegram(), parse_mode=ParseMode.HTML)
+            if(len(news.images) > 0):
+                await self.bot.send_photo(
+                    photo=news.images[0].path,
+                    chat_id=channel_id,
+                    caption=message.for_telegram(),
+                    parse_mode=ParseMode.HTML
+                    )
+            else:
+                await self.bot.send_message(channel_id, message.for_telegram(), parse_mode=ParseMode.HTML)
         await self.change_status(news, "accepted")
         await callback.message.delete()
         return news
@@ -134,6 +143,9 @@ class RegenerateNewsHandler(NewsHandler):
 
     async def handler(self, callback: types.CallbackQuery, news: News, keyboard: CreateKeyBoard, message: PrepareMessage) -> News | None:
         news.modified_content = chat.create_content(news.title, news.original_content)
-        await callback.message.edit_text(text=message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keyboard.news_moderation())
+        if (callback.message.photo):
+            await callback.message.edit_caption(caption=message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keyboard.news_moderation())
+        else:
+            await callback.message.edit_text(text=message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keyboard.news_moderation())
         await self.change_status(news, "regenerated")
         return news
