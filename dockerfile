@@ -11,4 +11,4 @@ RUN pip install "poetry==$POETRY_VERSION"
 
 RUN poetry install --no-root
 
-ENTRYPOINT [ "poetry", "python", "app/main.py" ]
+ENTRYPOINT [ "poetry", "run", "python", "app/main.py" ]
