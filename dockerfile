@@ -1,7 +1,7 @@
 FROM python:3.11-alpine
 
-ENV APP_HOME /app \
-    POETRY_VERSION 1.7.1
+ENV APP_HOME=/app \
+    POETRY_VERSION=1.7.1
 
 WORKDIR $APP_HOME
 
@@ -11,4 +11,4 @@ RUN pip install "poetry==$POETRY_VERSION"
 
 RUN poetry install --no-root
 
-ENTRYPOINT [ "poetry", "run", "python", "app/main.py" ]
+ENTRYPOINT [ "poetry", "run", "python", "-m", "app.main" ]
