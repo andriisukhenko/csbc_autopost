@@ -1,0 +1,38 @@
+name: CSBC bot news poster
+run-name: ${{ github.actor }} start deployment 🚀
+on:
+    push:
+        branches:
+            - master
+            - develop
+    pull_request:
+        branches:
+            - master
+            - develop
+jobs:
+    deploy_production:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        if: github.ref == 'refs/heads/master'
+        steps:
+            - name: connect to server
+              uses: appleboy/ssh-action@v0.1.10
+              with:
+                host: ${{ secrets.SSH_HOST }}
+                username: ${{ secrets.SSH_USER }}
+                key: ${{ secrets.SSH_KEY }}
+                script: bash ~/csbc_bot_poster/build.sh production
+    deploy_development:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        if: github.ref == 'refs/heads/develop'
+        steps:
+            - name: connect to server
+              uses: appleboy/ssh-action@v0.1.10
+              with:
+                host: ${{ secrets.SSH_HOST }}
+                username: ${{ secrets.SSH_USER }}
+                key: ${{ secrets.SSH_KEY }}
+                script: bash ~/csbc_bot_poster/build.sh development
+        
+                
