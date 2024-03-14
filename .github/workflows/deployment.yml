@@ -25,7 +25,7 @@ jobs:
     deploy_development:
         runs-on: ubuntu-latest
         timeout-minutes: 5
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/develop'
         steps:
             - name: connect to server
               uses: appleboy/ssh-action@v0.1.10
