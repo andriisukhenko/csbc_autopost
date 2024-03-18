@@ -1,6 +1,7 @@
 from typing import List
 from aiogram import Bot, types
 from aiogram.enums.parse_mode import ParseMode
+from aiogram.exceptions import TelegramBadRequest
 from app.models import News
 from sqlalchemy.orm import Session
 from app.chat_openai import chat
@@ -59,13 +60,17 @@ class SendToModeratorsHandler:
             keybord = self.CreateKeyboard(news)
             message = self.PrepareMessage(news)
             if(len(news.images) > 0):
-                await self.bot.send_photo(
-                    photo=news.images[0].path,
-                    chat_id=moderator_id,
-                    caption=message.for_telegram(),
-                    parse_mode=ParseMode.HTML, 
-                    reply_markup=keybord.news_moderation()
+                try:
+                    await self.bot.send_photo(
+                        photo=news.images[0].path,
+                        chat_id=moderator_id,
+                        caption=message.for_telegram(),
+                        parse_mode=ParseMode.HTML, 
+                        reply_markup=keybord.news_moderation()
                     )
+                except TelegramBadRequest as e:
+                    print("Telegram Bad Request:", e, news.url, news.images[0].path)
+                    await self.bot.send_message(moderator_id, message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keybord.news_moderation())
             else:
                 await self.bot.send_message(moderator_id, message.for_telegram(), parse_mode=ParseMode.HTML, reply_markup=keybord.news_moderation())
 
@@ -118,12 +123,15 @@ class AcceptNewsHandler(NewsHandler):
     async def handler(self, callback: types.CallbackQuery, news: News, keyboard: CreateKeyBoard, message: PrepareMessage) -> News:
         for channel_id in self.channels_ids:
             if(len(news.images) > 0):
-                await self.bot.send_photo(
-                    photo=news.images[0].path,
-                    chat_id=channel_id,
-                    caption=message.for_telegram(),
-                    parse_mode=ParseMode.HTML
+                try:
+                    await self.bot.send_photo(
+                        photo=news.images[0].path,
+                        chat_id=channel_id,
+                        caption=message.for_telegram(),
+                        parse_mode=ParseMode.HTML
                     )
+                except TelegramBadRequest:
+                    await self.bot.send_message(channel_id, message.for_telegram(), parse_mode=ParseMode.HTML)
             else:
                 await self.bot.send_message(channel_id, message.for_telegram(), parse_mode=ParseMode.HTML)
         await self.change_status(news, "accepted")
